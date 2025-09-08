@@ -1,0 +1,2 @@
+${REG_BANK}/srclist/test.srclist
+${REG_BANK}/tests/test_tb.sv
