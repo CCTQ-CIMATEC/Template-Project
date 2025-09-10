@@ -1,4 +1,4 @@
-module axi4lite_tb #(
+module template_project #(
     parameter ADDR_WIDTH = 32,
     parameter DATA_WIDTH = 32
 ) (

@@ -108,6 +108,15 @@ main() {
         error_exit "No top name provided!"
     fi
 
+    # Gera o AXI SmartConnect usando Vivado em modo batch
+    echo "Generating AXI SmartConnect..."
+    vivado -mode batch -source ../scripts/generate_smartconnect.tcl -notrace -nojournal -nolog
+
+    # Verifica se a geração foi bem-sucedida
+    if [ $? -ne 0 ]; then
+        error_exit "Failed to generate AXI SmartConnect!"
+    fi
+
     #echo ${CURRENT_DIR}
     # Generate source list path
     list=$("../scripts/srclist2path.sh" "../srclist/${TOP_NAME}.srclist")
