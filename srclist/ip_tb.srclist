@@ -1,2 +1,2 @@
-${TEMPLATE-PROJECT}/srclist/test.srclist
-${TEMPLATE-PROJECT}/tests/test_tb.sv
+${TEMPLATE_PROJECT}/srclist/ip.srclist
+${TEMPLATE_PROJECT}/tests/ip_tb.sv

@@ -119,9 +119,10 @@ main() {
 
     #echo ${CURRENT_DIR}
     # Generate source list path
-    list=$("../scripts/srclist2path.sh" "../srclist/${TOP_NAME}.srclist")
+    list=$(../scripts/srclist2path.sh "../srclist/${TOP_NAME}.srclist" 2>/dev/null)
+    echo "########################################## TESTE ###########################################"
     echo "${list}"
-
+    echo "########################################## TESTE ###########################################"
     # Run simulation
     xvlog -L uvm -sv "${XILINX_VIVADO}/data/system_verilog/uvm_1.2/uvm_macros.svh" ${list}
     xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -s top_sim --debug typical --mt 16 --incr
