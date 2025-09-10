@@ -1,0 +1,4 @@
+${CONFIG_REGISTER_MANAGER}/srclist/axi4lite_tb.srclist
+${CNTRL_BUS_READ_WRITE}/srclist/test.srclist
+${REG_BANK}/srclist/test.srclist
+${TEMPLATE-PROJECT}/rtl/test.sh

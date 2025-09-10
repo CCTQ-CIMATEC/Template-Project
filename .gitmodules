@@ -1,0 +1,9 @@
+[submodule "ip_lib/config-register-manager"]
+	path = ip_lib/config-register-manager
+	url = ../config-register-manager.git
+[submodule "ip_lib/reg-bank-ip"]
+	path = ip_lib/reg-bank-ip
+	url = ../reg-bank-ip.git
+[submodule "ip_lib/Cntrl-bus-reg-write"]
+	path = ip_lib/Cntrl-bus-reg-write
+	url = ../Cntrl-bus-reg-write.git

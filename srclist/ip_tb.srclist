@@ -1,0 +1,2 @@
+${TEMPLATE-PROJECT}/srclist/test.srclist
+${TEMPLATE-PROJECT}/tests/test_tb.sv
