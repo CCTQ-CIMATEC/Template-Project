@@ -117,14 +117,24 @@ main() {
         error_exit "Failed to generate AXI SmartConnect!"
     fi
 
+    IP_SIM_FILES="$(
+        find ./sim_output -name "*.v" -o -name "*.sv" -o -name "*.vhd" | 
+        grep -v "testbench" |
+        tr '\n' ' '
+    )"
+
     #echo ${CURRENT_DIR}
     # Generate source list path
     list=$(../scripts/srclist2path.sh "../srclist/${TOP_NAME}.srclist" 2>/dev/null)
-    echo "########################################## TESTE ###########################################"
     echo "${list}"
-    echo "########################################## TESTE ###########################################"
     # Run simulation
-    xvlog -L uvm -sv "${XILINX_VIVADO}/data/system_verilog/uvm_1.2/uvm_macros.svh" ${list}
+    # Run simulation with IP files
+    xvlog -L uvm -sv \
+        "${XILINX_VIVADO}/data/system_verilog/uvm_1.2/uvm_macros.svh" \
+        ${list} ${IP_SIM_FILES} \
+        -i "${XILINX_VIVADO}/data/verilog/src/unisims" \
+        -i "${XILINX_VIVADO}/data/verilog/src/unimacro"
+    
     xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -s top_sim --debug typical --mt 16 --incr
 
     export tb_file="${TOP_NAME}"

@@ -1,6 +1,7 @@
 # generate_smartconnect_sv.tcl
 set project_name "axi_smartconnect_wrapper_sv"
 set part "xczu7ev-ffvc1156-2-e"
+set sim_dir "./sim_output" 
 
 # Criar projeto temporário
 create_project -force $project_name ./$project_name -part $part
@@ -64,8 +65,15 @@ validate_bd_design
 make_wrapper -files [get_files ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/smartconnect_bd.bd] -top
 add_files -norecurse ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/hdl/smartconnect_bd_wrapper.v
 
-# Gerar produtos de saída
-generate_target all [get_files ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/smartconnect_bd.bd]
+# Gerar targets de simulação
+generate_target simulation [get_files ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/smartconnect_bd.bd]
+
+# Exportar simulação para diretório específico
+export_simulation \
+  -directory $sim_dir \
+  -force \
+  -simulator xsim \
+  -lib_map_path []
 
 # Fechar projeto
 close_project
