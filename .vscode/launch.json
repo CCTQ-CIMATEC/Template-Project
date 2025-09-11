@@ -1,0 +1,33 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+       /* {
+            "name": "Debug xrun.sh",
+            "type": "bashdb",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/xrun.sh",
+            "args": [
+                "-top",
+                "ip_tb",
+                "-vivado",
+                "--R"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "TOP_NAME": "ip_tb"
+            },
+            "console": "integratedTerminal"
+        },*/
+        {
+            "name": "Debug srclist2path.sh",
+            "type": "bashdb",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/srclist2path.sh",
+            "args": [
+                "../srclist/ip_tb.srclist"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}
