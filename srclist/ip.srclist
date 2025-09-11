@@ -1,4 +1,5 @@
 ${CONFIG_REGISTER_MANAGER}/srclist/axi4lite.srclist
 ${CNTRL_BUS_READ_WRITE}/srclist/test.srclist
 ${REG_BANK}/srclist/test.srclist
+${TEMPLATE_PROJECT}/rtl/smartconnect_wrapper.sv
 ${TEMPLATE_PROJECT}/rtl/test.sv
