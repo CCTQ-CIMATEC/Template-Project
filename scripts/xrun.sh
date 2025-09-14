@@ -117,25 +117,44 @@ main() {
         error_exit "Failed to generate AXI SmartConnect!"
     fi
 
-    IP_SIM_FILES="$(
-        find ./sim_output -name "*.v" -o -name "*.sv" -o -name "*.vhd" | 
-        grep -v "testbench" |
-        tr '\n' ' '
-    )"
+    IP_DIR="../build/sim_output/xsim"
+
+    # Compila bibliotecas do IP (netlist pré-compilada)
+    if [ -f "${IP_DIR}/smartconnect_bd_wrapper.sh" ]; then
+        echo "Compiling IP simulation libraries..."
+        (cd "${IP_DIR}" && ./smartconnect_bd_wrapper.sh -step compile -lib_map_path ${XILINX_VIVADO}/data/xsim/compile)
+        if [ $? -ne 0 ]; then
+            error_exit "Failed to compile IP simulation"
+        fi
+    else
+        error_exit "IP simulation script not found at ${IP_DIR}/smartconnect_bd_wrapper.sh"
+    fi
 
     #echo ${CURRENT_DIR}
     # Generate source list path
     list=$(../scripts/srclist2path.sh "../srclist/${TOP_NAME}.srclist" 2>/dev/null)
     echo "${list}"
     # Run simulation
-    # Run simulation with IP files
+    # Linha xvlog incluindo os arquivos
     xvlog -L uvm -sv \
         "${XILINX_VIVADO}/data/system_verilog/uvm_1.2/uvm_macros.svh" \
-        ${list} ${IP_SIM_FILES} \
+        ${list} \
         -i "${XILINX_VIVADO}/data/verilog/src/unisims" \
         -i "${XILINX_VIVADO}/data/verilog/src/unimacro"
     
-    xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -s top_sim --debug typical --mt 16 --incr
+    xvlog -sv -work xil_defaultlib ${IP_DIR}/glbl.v
+
+    xelab ${TOP_NAME} xil_defaultlib.glbl \
+    --timescale 1ns/1ps \
+    -L uvm \
+    -L xil_defaultlib \
+    -L axi_infrastructure_v1_1_0 \
+    -L smartconnect_v1_0 \
+    -L lib_cdc_v1_0_3 \
+    -L proc_sys_reset_v5_0_15 \
+    -L xlconstant_v1_1_9 \
+    -L xilinx_vip -L unisims_ver -L unimacro_ver -L secureip -L xpm \
+    -s top_sim --debug typical --mt 16 --incr
 
     export tb_file="${TOP_NAME}"
     if [[ " ${@:2} " =~ " --g " ]] || [[ "${@:2} " =~ " --gui" ]]; then

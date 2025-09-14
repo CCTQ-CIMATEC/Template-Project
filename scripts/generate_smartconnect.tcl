@@ -65,6 +65,8 @@ validate_bd_design
 make_wrapper -files [get_files ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/smartconnect_bd.bd] -top
 add_files -norecurse ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/hdl/smartconnect_bd_wrapper.v
 
+set_property top smartconnect_bd_wrapper [get_filesets sim_1]
+
 # Gerar targets de simulação
 generate_target simulation [get_files ./$project_name/$project_name.srcs/sources_1/bd/smartconnect_bd/smartconnect_bd.bd]
 
