@@ -118,11 +118,18 @@ main() {
     fi
 
     IP_DIR="../build/sim_output/xsim"
+    # set xvlog options
+    xvlog_opts="--incr --relax  -L uvm -L axi_vip_v1_1_17 -L smartconnect_v1_0 -L xilinx_vip"
+    # set xvhdl options
+    xvhdl_opts="--incr --relax "
+
 
     # Compila bibliotecas do IP (netlist pré-compilada)
     if [ -f "${IP_DIR}/smartconnect_bd_wrapper.sh" ]; then
         echo "Compiling IP simulation libraries..."
-        (cd "${IP_DIR}" && ./smartconnect_bd_wrapper.sh -step compile -lib_map_path ${XILINX_VIVADO}/data/xsim/compile)
+        xvlog $xvlog_opts -prj ${IP_DIR}/vlog.prj 2>&1 | tee compile.log
+        xvhdl $xvhdl_opts -prj ${IP_DIR}/vhdl.prj 2>&1 | tee compile.log
+
         if [ $? -ne 0 ]; then
             error_exit "Failed to compile IP simulation"
         fi
@@ -141,9 +148,9 @@ main() {
         ${list} \
         -i "${XILINX_VIVADO}/data/verilog/src/unisims" \
         -i "${XILINX_VIVADO}/data/verilog/src/unimacro"
-    
-    xvlog -sv -work xil_defaultlib ${IP_DIR}/glbl.v
 
+
+    #xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -L xil_defaultlib  -s top_sim --debug typical --mt 16 --incr
     xelab ${TOP_NAME} xil_defaultlib.glbl \
     --timescale 1ns/1ps \
     -L uvm \
