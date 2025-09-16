@@ -1,7 +1,7 @@
 # generate_smartconnect_sv.tcl
 set project_name "axi_smartconnect_wrapper_sv"
 set part "xczu7ev-ffvc1156-2-e"
-set sim_dir "./sim_output" 
+set sim_dir "./sim_output_smartconnect" 
 
 # Criar projeto temporário
 create_project -force $project_name ./$project_name -part $part
