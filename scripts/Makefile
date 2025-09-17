@@ -76,15 +76,15 @@ $(BUILD_DIR)/.gen_$(1).timestamp:
 	@cd $(BUILD_DIR) && \
 	vivado -mode batch -source ../scripts/generate_$(1).tcl -notrace -nojournal -nolog || \
 	(echo "ERROR: Failed to generate IP $(1)" && exit 1)
-	touch $$@
+	@touch $$@
 
 # phony wrapper that prints SKIPPED if timestamp exists, otherwise triggers generation
 .PHONY: generate_$(1)
 generate_$(1):
 	@if [ -f $(BUILD_DIR)/.gen_$(1).timestamp ]; then \
-		@echo "### SKIPPED GENERATING IP: $(1) (already up-to-date) ###"; \
+		echo "### SKIPPED GENERATING IP: $(1) (already up-to-date) ###"; \
 	else \
-		$(MAKE) $(BUILD_DIR)/.gen_$(1).timestamp; \
+		$(MAKE) --no-print-directory $(BUILD_DIR)/.gen_$(1).timestamp; \
 	fi
 endef
 
@@ -99,15 +99,15 @@ $(BUILD_DIR)/.comp_$(1).timestamp: $(BUILD_DIR)/.gen_$(1).timestamp
 	xvlog $$(XVLOG_OPTS_$(1)) -prj sim_output_$(1)/xsim/vlog.prj && \
 	xvhdl $$(XVHDL_OPTS_$(1)) -prj sim_output_$(1)/xsim/vhdl.prj || \
 	(echo "ERROR: Failed to compile IP $(1)" && exit 1)
-	touch $$@
+	@touch $$@
 
 # phony wrapper that prints SKIPPED if compiled already, otherwise triggers compile
 .PHONY: compile_$(1)
-compile_$(1):
+compile_$(1): generate_$(1)
 	@if [ -f $(BUILD_DIR)/.comp_$(1).timestamp ]; then \
-		@echo "### SKIPPED COMPILING IP: $(1) (already up-to-date) ###"; \
+		echo "### SKIPPED COMPILING IP: $(1) (already up-to-date) ###"; \
 	else \
-		$(MAKE) $(BUILD_DIR)/.comp_$(1).timestamp; \
+		$(MAKE) --no-print-directory $(BUILD_DIR)/.comp_$(1).timestamp; \
 	fi
 endef
 
@@ -140,11 +140,11 @@ $(BUILD_DIR)/.comp_core.timestamp: $(foreach ip,$(IP_DEPENDENCIES),$(BUILD_DIR)/
 
 # phony wrapper for compile (core) that prints SKIPPED if already compiled
 .PHONY: compile
-compile:
+compile: compile_ip
 	@if [ -f $(BUILD_DIR)/.comp_core.timestamp ]; then \
-		@echo "### SKIPPED CORE COMPILATION (already up-to-date) ###"; \
+		echo "### SKIPPED CORE COMPILATION (already up-to-date) ###"; \
 	else \
-		$(MAKE) $(BUILD_DIR)/.comp_core.timestamp; \
+		$(MAKE) --no-print-directory $(BUILD_DIR)/.comp_core.timestamp; \
 	fi
 
 # elaborate: file target that runs xelab and touches .elaborate.timestamp
@@ -160,11 +160,11 @@ $(BUILD_DIR)/.elaborate.timestamp: $(BUILD_DIR)/.comp_core.timestamp
 
 # phony wrapper for elaborate (prints SKIPPED if already elaborated)
 .PHONY: elaborate
-elaborate:
+elaborate: compile
 	@if [ -f $(BUILD_DIR)/.elaborate.timestamp ]; then \
 		echo "### SKIPPED ELABORATION (already up-to-date) ###"; \
 	else \
-		$(MAKE) $(BUILD_DIR)/.elaborate.timestamp; \
+		$(MAKE) --no-print-directory $(BUILD_DIR)/.elaborate.timestamp; \
 	fi
 
 simulate: elaborate
