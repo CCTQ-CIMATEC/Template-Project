@@ -117,7 +117,7 @@ main() {
         error_exit "Failed to generate AXI SmartConnect!"
     fi
 
-    IP_DIR="../build/sim_output/xsim"
+    IP_DIR="../build/sim_output_smartconnect/xsim"
     # set xvlog options
     xvlog_opts="--incr --relax  -L uvm -L axi_vip_v1_1_17 -L smartconnect_v1_0 -L xilinx_vip"
     # set xvhdl options

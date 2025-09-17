@@ -27,6 +27,10 @@ XVLOG_OPTS := $(XVLOG_OPTS_BASE) $(foreach ip,$(IP_DEPENDENCIES),$($(addprefix X
 XVHDL_OPTS := $(XVHDL_OPTS_BASE) $(foreach ip,$(IP_DEPENDENCIES),$($(addprefix XVHDL_OPTS_,$(ip))))
 XELAB_OPTS := $(XELAB_OPTS_BASE) $(foreach ip,$(IP_DEPENDENCIES),$($(addprefix XELAB_OPTS_,$(ip))))
 
+ifndef XILINX_VIVADO
+    $(error XILINX_VIVADO is not set. Please run source Vivado settings script)
+endif
+
 # ======================
 # Phony targets
 # ======================
@@ -63,51 +67,105 @@ clean:
 # IP Handling (foreach)
 # ======================
 
-# Generate step for each IP
+# Generate step for each IP with timestamp
 define GEN_TEMPLATE
-generate_$(1):
-	@echo "Generating IP: $(1)"
+# file target that actually does the generation and touches the timestamp
+$(BUILD_DIR)/.gen_$(1).timestamp:
+	@echo
+	@echo "### GENERATING IP: $(1) ###"
 	@cd $(BUILD_DIR) && \
 	vivado -mode batch -source ../scripts/generate_$(1).tcl -notrace -nojournal -nolog || \
 	(echo "ERROR: Failed to generate IP $(1)" && exit 1)
+	touch $$@
+
+# phony wrapper that prints SKIPPED if timestamp exists, otherwise triggers generation
+.PHONY: generate_$(1)
+generate_$(1):
+	@if [ -f $(BUILD_DIR)/.gen_$(1).timestamp ]; then \
+		@echo "### SKIPPED GENERATING IP: $(1) (already up-to-date) ###"; \
+	else \
+		$(MAKE) $(BUILD_DIR)/.gen_$(1).timestamp; \
+	fi
 endef
 
-# Compile step for each IP
+
+# ==== Compile step for each IP with timestamp ====
 define COMPILE_TEMPLATE
-compile_$(1): generate_$(1)
-	@echo "Compiling IP simulation libraries for $(1)..."
+# file target that compiles the IP (depends on the gen timestamp)
+$(BUILD_DIR)/.comp_$(1).timestamp: $(BUILD_DIR)/.gen_$(1).timestamp
+	@echo
+	@echo "### COMPILING IP: $(1) ###"
 	@cd $(BUILD_DIR) && \
 	xvlog $$(XVLOG_OPTS_$(1)) -prj sim_output_$(1)/xsim/vlog.prj && \
 	xvhdl $$(XVHDL_OPTS_$(1)) -prj sim_output_$(1)/xsim/vhdl.prj || \
 	(echo "ERROR: Failed to compile IP $(1)" && exit 1)
+	touch $$@
+
+# phony wrapper that prints SKIPPED if compiled already, otherwise triggers compile
+.PHONY: compile_$(1)
+compile_$(1):
+	@if [ -f $(BUILD_DIR)/.comp_$(1).timestamp ]; then \
+		@echo "### SKIPPED COMPILING IP: $(1) (already up-to-date) ###"; \
+	else \
+		$(MAKE) $(BUILD_DIR)/.comp_$(1).timestamp; \
+	fi
 endef
 
-# Expand rules for each IP in IP_DEPENDENCIES
+
+# ==== Expand templates for every ip in IP_DEPENDENCIES ====
 $(foreach ip,$(IP_DEPENDENCIES),$(eval $(call GEN_TEMPLATE,$(ip))))
 $(foreach ip,$(IP_DEPENDENCIES),$(eval $(call COMPILE_TEMPLATE,$(ip))))
 
-# Meta targets
+
+# ==== Meta targets ====
+.PHONY: generate compile_ip
 generate: $(foreach ip,$(IP_DEPENDENCIES),generate_$(ip))
 compile_ip: $(foreach ip,$(IP_DEPENDENCIES),compile_$(ip))
 
-# ======================
-# Core Simulation Flow
-# ======================
+# -------------------------
+# Core compile and elaborate (timestamp + wrapper)
+# -------------------------
 
-compile: compile_ip
+# actual file target that compiles core/top sources and touches .comp_core.timestamp
+$(BUILD_DIR)/.comp_core.timestamp: $(foreach ip,$(IP_DEPENDENCIES),$(BUILD_DIR)/.comp_$(ip).timestamp)
+	@echo
+	@echo "### COMPILING CORE/TOP SOURCES ###"
 	@cd $(BUILD_DIR) && \
 	list=$$(../scripts/srclist2path.sh "../srclist/$(TOP_NAME).srclist" 2>/dev/null); \
 	xvlog -L uvm -sv \
-		"$$XILINX_VIVADO/data/system_verilog/uvm_1.2/uvm_macros.svh" $$list \
-		-i "$$XILINX_VIVADO/data/verilog/src/unisims" \
-		-i "$$XILINX_VIVADO/data/verilog/src/unimacro"; \
+		"$(XILINX_VIVADO)/data/system_verilog/uvm_1.2/uvm_macros.svh" $$list \
+		-i "$(XILINX_VIVADO)/data/verilog/src/unisims" \
+		-i "$(XILINX_VIVADO)/data/verilog/src/unimacro"; \
+	touch $@
 
-elaborate: compile
+# phony wrapper for compile (core) that prints SKIPPED if already compiled
+.PHONY: compile
+compile:
+	@if [ -f $(BUILD_DIR)/.comp_core.timestamp ]; then \
+		@echo "### SKIPPED CORE COMPILATION (already up-to-date) ###"; \
+	else \
+		$(MAKE) $(BUILD_DIR)/.comp_core.timestamp; \
+	fi
+
+# elaborate: file target that runs xelab and touches .elaborate.timestamp
+$(BUILD_DIR)/.elaborate.timestamp: $(BUILD_DIR)/.comp_core.timestamp
 	@echo
-	@echo "### ELABORATING ###"
+	@echo "### ELABORATING DESIGN ###"
+	@cd $(BUILD_DIR) && \
 	xelab $(TOP_NAME) --timescale 1ns/1ps \
 		${XELAB_OPTS} \
-		-s top_sim --debug typical --mt 16 --incr
+		-s top_sim --debug typical --mt 16 --incr || \
+	(echo "ERROR: xelab failed" && exit 1)
+	@touch $$@
+
+# phony wrapper for elaborate (prints SKIPPED if already elaborated)
+.PHONY: elaborate
+elaborate:
+	@if [ -f $(BUILD_DIR)/.elaborate.timestamp ]; then \
+		echo "### SKIPPED ELABORATION (already up-to-date) ###"; \
+	else \
+		$(MAKE) $(BUILD_DIR)/.elaborate.timestamp; \
+	fi
 
 simulate: elaborate
 	@cd $(BUILD_DIR) && \
