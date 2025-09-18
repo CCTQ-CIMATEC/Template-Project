@@ -1,13 +1,16 @@
 # Makefile for Vivado simulation flow
 
 # ======================
-# Variables
+# Variables/Parameters
 # ======================
 TOP_NAME      ?= adder_tb_top
 TEST_NAME     ?= adder_basic_test
-VIVADO_PARMS  ?=
+VIVADO_PARMS  ?= "--R"
 IP_DEPENDENCIES ?=
 
+# ======================
+# Variables
+# ======================
 GIT_ROOT      := $(shell git rev-parse --show-toplevel)
 BUILD_DIR     := $(GIT_ROOT)/build
 
