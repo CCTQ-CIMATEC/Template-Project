@@ -117,7 +117,7 @@ main() {
         error_exit "Failed to generate AXI SmartConnect!"
     fi
 
-    IP_DIR="../build/sim_output/xsim"
+    IP_DIR="../build/sim_output_smartconnect/xsim"
     # set xvlog options
     xvlog_opts="--incr --relax  -L uvm -L axi_vip_v1_1_17 -L smartconnect_v1_0 -L xilinx_vip"
     # set xvhdl options
@@ -127,8 +127,8 @@ main() {
     # Compila bibliotecas do IP (netlist pré-compilada)
     if [ -f "${IP_DIR}/smartconnect_bd_wrapper.sh" ]; then
         echo "Compiling IP simulation libraries..."
-        xvlog $xvlog_opts -prj ${IP_DIR}/vlog.prj 2>&1 | tee compile.log
-        xvhdl $xvhdl_opts -prj ${IP_DIR}/vhdl.prj 2>&1 | tee compile.log
+        xvlog $xvlog_opts -prj ${IP_DIR}/vlog.prj
+        xvhdl $xvhdl_opts -prj ${IP_DIR}/vhdl.prj
 
         if [ $? -ne 0 ]; then
             error_exit "Failed to compile IP simulation"
@@ -151,8 +151,7 @@ main() {
 
 
     #xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -L xil_defaultlib  -s top_sim --debug typical --mt 16 --incr
-    xelab ${TOP_NAME} xil_defaultlib.glbl \
-    --timescale 1ns/1ps \
+    xelab ${TOP_NAME} --timescale 1ns/1ps \
     -L uvm \
     -L xil_defaultlib \
     -L axi_infrastructure_v1_1_0 \
