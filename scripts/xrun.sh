@@ -117,15 +117,50 @@ main() {
         error_exit "Failed to generate AXI SmartConnect!"
     fi
 
+    IP_DIR="../build/sim_output_smartconnect/xsim"
+    # set xvlog options
+    xvlog_opts="--incr --relax  -L uvm -L axi_vip_v1_1_17 -L smartconnect_v1_0 -L xilinx_vip"
+    # set xvhdl options
+    xvhdl_opts="--incr --relax "
+
+
+    # Compila bibliotecas do IP (netlist pré-compilada)
+    if [ -f "${IP_DIR}/smartconnect_bd_wrapper.sh" ]; then
+        echo "Compiling IP simulation libraries..."
+        xvlog $xvlog_opts -prj ${IP_DIR}/vlog.prj
+        xvhdl $xvhdl_opts -prj ${IP_DIR}/vhdl.prj
+
+        if [ $? -ne 0 ]; then
+            error_exit "Failed to compile IP simulation"
+        fi
+    else
+        error_exit "IP simulation script not found at ${IP_DIR}/smartconnect_bd_wrapper.sh"
+    fi
+
     #echo ${CURRENT_DIR}
     # Generate source list path
     list=$(../scripts/srclist2path.sh "../srclist/${TOP_NAME}.srclist" 2>/dev/null)
-    echo "########################################## TESTE ###########################################"
     echo "${list}"
-    echo "########################################## TESTE ###########################################"
     # Run simulation
-    xvlog -L uvm -sv "${XILINX_VIVADO}/data/system_verilog/uvm_1.2/uvm_macros.svh" ${list}
-    xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -s top_sim --debug typical --mt 16 --incr
+    # Linha xvlog incluindo os arquivos
+    xvlog -L uvm -sv \
+        "${XILINX_VIVADO}/data/system_verilog/uvm_1.2/uvm_macros.svh" \
+        ${list} \
+        -i "${XILINX_VIVADO}/data/verilog/src/unisims" \
+        -i "${XILINX_VIVADO}/data/verilog/src/unimacro"
+
+
+    #xelab ${TOP_NAME} --timescale 1ns/1ps -L uvm -L xil_defaultlib  -s top_sim --debug typical --mt 16 --incr
+    xelab ${TOP_NAME} --timescale 1ns/1ps \
+    -L uvm \
+    -L xil_defaultlib \
+    -L axi_infrastructure_v1_1_0 \
+    -L smartconnect_v1_0 \
+    -L lib_cdc_v1_0_3 \
+    -L proc_sys_reset_v5_0_15 \
+    -L xlconstant_v1_1_9 \
+    -L xilinx_vip -L unisims_ver -L unimacro_ver -L secureip -L xpm \
+    -s top_sim --debug typical --mt 16 --incr
 
     export tb_file="${TOP_NAME}"
     if [[ " ${@:2} " =~ " --g " ]] || [[ "${@:2} " =~ " --gui" ]]; then
